@@ -151,7 +151,7 @@ GeoHack.Propagator = function (epoch, position, velocity, step) {
     this._initEpoch = epoch;
     this._initPosition = position;
     this._initVelocity = velocity;
-    this._step = step || 1;
+    this._step = step || 0.1;
     this.reset();
 }
 
