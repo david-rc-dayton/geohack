@@ -77,6 +77,11 @@ GeoHack.eci2ecef = function (t, v) {
     return GeoHack.rotateZ(-a, v);
 }
 
+GeoHack.ecef2eci = function (t, v) {
+    var a = GeoHack.gmst(t);
+    return GeoHack.rotateZ(a, v);
+}
+
 GeoHack.ecef2geodetic = function (v) {
     var x = v[0];
     var y = v[1];
