@@ -70,20 +70,20 @@ var GeoHack = (function () {
         ];
     }
 
-    var eci2ecef = function (t, v) {
+    var eci2ecef = function (t, eci) {
         var a = gmst(t);
-        return rotateZ(-a, v);
+        return rotateZ(-a, eci);
     }
 
-    var ecef2eci = function (t, v) {
+    var ecef2eci = function (t, ecef) {
         var a = gmst(t);
-        return rotateZ(a, v);
+        return rotateZ(a, ecef);
     }
 
-    var ecef2geodetic = function (v) {
-        var x = v[0];
-        var y = v[1];
-        var z = v[2];
+    var ecef2geodetic = function (ecef) {
+        var x = ecef[0];
+        var y = ecef[1];
+        var z = ecef[2];
         var a = EQUATORIAL_RADIUS;
         var b = POLAR_RADIUS;
         var R = Math.sqrt((x * x) + (y * y));
@@ -97,13 +97,13 @@ var GeoHack = (function () {
             lat = Math.atan2(z + (a * c * e2 * Math.sin(lat)), R);
         }
         var alt = (R / Math.cos(lat)) - (a * c);
-        return [lat, lon, alt];
+        return [lat * RAD2DEG, lon * RAD2DEG, alt];
     }
 
-    var geodetic2ecef = function (v) {
-        var lat = v[0];
-        var lon = v[1];
-        var alt = v[2];
+    var geodetic2ecef = function (geodetic) {
+        var lat = geodetic[0] * DEG2RAD;
+        var lon = geodetic[1] * DEG2RAD;
+        var alt = geodetic[2];
         var a = EQUATORIAL_RADIUS;
         var b = POLAR_RADIUS;
         var f = (a - b) / a;
@@ -115,10 +115,10 @@ var GeoHack = (function () {
         return [x, y, z];
     }
 
-    var topocentric = function (geoOriginRad, ecefTarget) {
-        var lat = geoOriginRad[0];
-        var lon = geoOriginRad[1];
-        var oECEF = geodetic2ecef(geoOriginRad);
+    var topocentric = function (geoOrigin, ecefTarget) {
+        var lat = geoOrigin[0] * DEG2RAD;
+        var lon = geoOrigin[1] * DEG2RAD;
+        var oECEF = geodetic2ecef(geoOrigin);
         var tECEF = ecefTarget;
         var rX = tECEF[0] - oECEF[0];
         var rY = tECEF[1] - oECEF[1];
@@ -137,12 +137,8 @@ var GeoHack = (function () {
         return [S, E, Z];
     }
 
-    var lookangle = function (geoOriginDeg, ecefTarget) {
-        var geoOriginRad = [
-            geoOriginDeg[0] * DEG2RAD,
-            geoOriginDeg[1] * DEG2RAD,
-            [geoOriginDeg[2]]]
-        var sez = topocentric(geoOriginRad, ecefTarget);
+    var lookangle = function (geoOrigin, ecefTarget) {
+        var sez = topocentric(geoOrigin, ecefTarget);
         var s = sez[0];
         var e = sez[1];
         var z = sez[2];
