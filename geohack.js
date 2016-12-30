@@ -62,6 +62,10 @@ GeoHack.gmst = function (t) {
     return (theta < 0) ? GeoHack.TWO_PI + theta : theta;
 }
 
+GeoHack.now = function () {
+    return new Date().getTime();
+}
+
 GeoHack.rotateZ = function (theta, v) {
     return [
         v[0] * Math.cos(theta) + v[1] * -Math.sin(theta) + v[2] * 0,
@@ -117,10 +121,10 @@ GeoHack.geodetic2ecef = function (v) {
     return [x, y, z];
 }
 
-GeoHack.topocentric = function (geoOrigin, ecefTarget) {
-    var lat = geoOrigin[0];
-    var lon = geoOrigin[1];
-    var oECEF = GeoHack.geodetic2ecef(geoOrigin);
+GeoHack.topocentric = function (geoOriginRad, ecefTarget) {
+    var lat = geoOriginRad[0];
+    var lon = geoOriginRad[1];
+    var oECEF = GeoHack.geodetic2ecef(geoOriginRad);
     var tECEF = ecefTarget;
     var rX = tECEF[0] - oECEF[0];
     var rY = tECEF[1] - oECEF[1];
@@ -139,15 +143,19 @@ GeoHack.topocentric = function (geoOrigin, ecefTarget) {
     return [S, E, Z];
 }
 
-GeoHack.lookAngle = function (geoOrigin, ecefTarget) {
-    var sez = GeoHack.topocentric(geoOrigin, ecefTarget);
+GeoHack.lookAngle = function (geoOriginDeg, ecefTarget) {
+    var geoOriginRad = [
+        geoOriginDeg[0] * GeoHack.DEG2RAD,
+        geoOriginDeg[1] * GeoHack.DEG2RAD,
+        [geoOriginDeg[2]]]
+    var sez = GeoHack.topocentric(geoOriginRad, ecefTarget);
     var s = sez[0];
     var e = sez[1];
     var z = sez[2];
     var dist = Math.sqrt((s * s) + (e * e) + (z * z));
     var el = Math.asin(z / dist);
     var az = Math.atan2(-e, s) + Math.PI;
-    return [az, el, dist];
+    return [az * GeoHack.RAD2DEG, el * GeoHack.RAD2DEG, dist];
 }
 
 // Propagator /////////////////////////////////////////////////////////////////
@@ -156,7 +164,7 @@ GeoHack.Propagator = function (epoch, position, velocity, step) {
     this._initEpoch = epoch;
     this._initPosition = position;
     this._initVelocity = velocity;
-    this._step = step || 0.1;
+    this._step = step || 1;
     this.reset();
 }
 
@@ -222,11 +230,16 @@ GeoHack.Propagator.prototype.getGeodeticDegrees = function () {
     return [c[0] * GeoHack.RAD2DEG, c[1] * GeoHack.RAD2DEG, c[2]];
 }
 
+GeoHack.Propagator.prototype.getLookAngle = function (geoOriginDeg) {
+    var ecef = this.getECEF();
+    return GeoHack.lookAngle(geoOriginDeg, ecef);
+}
+
 // Test ///////////////////////////////////////////////////////////////////////
 
-GeoHack.testEpochStart = new Date().getTime();
-
-GeoHack.testEpochEnd = GeoHack.testEpochStart + 86164.09171 * 1000;
-
-GeoHack.testProp = new GeoHack.Propagator(
-    GeoHack.testEpochStart, [42164.17207, 0, 0], [0, 3.074660235, 0]);
+GeoHack.test = new GeoHack.Propagator(
+    GeoHack.now(),
+    [42164.17207, 0, 0],
+    [0, 3.074660235, 0]
+);
+console.log(GeoHack.VERSION);
