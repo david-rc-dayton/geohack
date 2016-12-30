@@ -1,6 +1,6 @@
-var GeoHack = (function () {
+(function (exports) {
 
-    var VERSION = "1.0.0-SNAPSHOT";
+    exports.VERSION = "1.0.0-SNAPSHOT";
 
     var MU = 398600.5;
 
@@ -58,7 +58,7 @@ var GeoHack = (function () {
         return (theta < 0) ? TWO_PI + theta : theta;
     }
 
-    var now = function () {
+    exports.now = function () {
         return new Date().getTime();
     }
 
@@ -70,17 +70,17 @@ var GeoHack = (function () {
         ];
     }
 
-    var eci2ecef = function (t, eci) {
+    exports.eci2ecef = function (t, eci) {
         var a = gmst(t);
         return rotateZ(-a, eci);
     }
 
-    var ecef2eci = function (t, ecef) {
+    exports.ecef2eci = function (t, ecef) {
         var a = gmst(t);
         return rotateZ(a, ecef);
     }
 
-    var ecef2geodetic = function (ecef) {
+    exports.ecef2geodetic = function (ecef) {
         var x = ecef[0];
         var y = ecef[1];
         var z = ecef[2];
@@ -100,7 +100,7 @@ var GeoHack = (function () {
         return [lat * RAD2DEG, lon * RAD2DEG, alt];
     }
 
-    var geodetic2ecef = function (geodetic) {
+    exports.geodetic2ecef = function (geodetic) {
         var lat = geodetic[0] * DEG2RAD;
         var lon = geodetic[1] * DEG2RAD;
         var alt = geodetic[2];
@@ -115,10 +115,10 @@ var GeoHack = (function () {
         return [x, y, z];
     }
 
-    var topocentric = function (geoOrigin, ecefTarget) {
+    exports.topocentric = function (geoOrigin, ecefTarget) {
         var lat = geoOrigin[0] * DEG2RAD;
         var lon = geoOrigin[1] * DEG2RAD;
-        var oECEF = geodetic2ecef(geoOrigin);
+        var oECEF = exports.geodetic2ecef(geoOrigin);
         var tECEF = ecefTarget;
         var rX = tECEF[0] - oECEF[0];
         var rY = tECEF[1] - oECEF[1];
@@ -137,8 +137,8 @@ var GeoHack = (function () {
         return [S, E, Z];
     }
 
-    var lookangle = function (geoOrigin, ecefTarget) {
-        var sez = topocentric(geoOrigin, ecefTarget);
+    exports.lookangle = function (geoOrigin, ecefTarget) {
+        var sez = exports.topocentric(geoOrigin, ecefTarget);
         var s = sez[0];
         var e = sez[1];
         var z = sez[2];
@@ -148,7 +148,7 @@ var GeoHack = (function () {
         return [az * RAD2DEG, el * RAD2DEG, dist];
     }
 
-    var Propagator = function (epoch, position, velocity, step) {
+    exports.Propagator = function (epoch, position, velocity, step) {
         this._initEpoch = epoch;
         this._initPosition = position;
         this._initVelocity = velocity;
@@ -156,14 +156,14 @@ var GeoHack = (function () {
         this.reset();
     }
 
-    Propagator.prototype.reset = function () {
+    exports.Propagator.prototype.reset = function () {
         this._epoch = this._initEpoch;
         this._position = copyArray(this._initPosition);
         this._velocity = copyArray(this._initVelocity);
         return this;
     }
 
-    Propagator.prototype.setStep = function (seconds) {
+    exports.Propagator.prototype.setStep = function (seconds) {
         if (seconds > 0) {
             this._step = seconds;
         } else {
@@ -172,7 +172,7 @@ var GeoHack = (function () {
         return this;
     }
 
-    Propagator.prototype.propagate = function (epoch) {
+    exports.Propagator.prototype.propagate = function (epoch) {
         var dir = (epoch < this._epoch) ? -1 : 1;
         while (epoch !== this._epoch) {
             var s = this._position;
@@ -197,48 +197,35 @@ var GeoHack = (function () {
         return this;
     }
 
-    Propagator.prototype.getEpoch = function () {
+    exports.Propagator.prototype.getEpoch = function () {
         return this._epoch;
     }
 
-    Propagator.prototype.getECI = function () {
+    exports.Propagator.prototype.getECI = function () {
         return this._position;
     }
 
-    Propagator.prototype.getECEF = function () {
-        return eci2ecef(this.getEpoch(), this.getECI());
+    exports.Propagator.prototype.getECEF = function () {
+        return exports.eci2ecef(this.getEpoch(), this.getECI());
     }
 
-    Propagator.prototype.getGeodetic = function () {
-        return ecef2geodetic(this.getECEF());
+    exports.Propagator.prototype.getGeodetic = function () {
+        return exports.ecef2geodetic(this.getECEF());
     }
 
-    Propagator.prototype.getGeodeticDegrees = function () {
+    exports.Propagator.prototype.getGeodeticDegrees = function () {
         var c = this.getGeodetic();
         return [c[0] * RAD2DEG, c[1] * RAD2DEG, c[2]];
     }
 
-    Propagator.prototype.getLookAngle = function (geoOriginDeg) {
+    exports.Propagator.prototype.getLookAngle = function (geoOriginDeg) {
         var ecef = this.getECEF();
-        return lookangle(geoOriginDeg, ecef);
+        return exports.lookangle(geoOriginDeg, ecef);
     }
 
-    var testSatellite = new Propagator(
-        now(),
+    exports.testSatellite = new exports.Propagator(
+        exports.now(),
         [42164.17207, 0, 0],
         [0, 3.074660235, 0]
     );
-
-    return {
-        "ecef2eci": ecef2eci,
-        "ecef2geodetic": ecef2geodetic,
-        "eci2ecef": eci2ecef,
-        "geodetic2ecef": geodetic2ecef,
-        "lookangle": lookangle,
-        "now": now,
-        "Propagator": Propagator,
-        "testSatellite": testSatellite,
-        "topocentric": topocentric,
-        "VERSION": VERSION
-    };
-})();
+})(this.GeoHack = this.GeoHack || {});
