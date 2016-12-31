@@ -1,4 +1,5 @@
 (function (exports) {
+    'use strict';
 
     exports.VERSION = "1.0.0-SNAPSHOT";
 
@@ -22,6 +23,23 @@
             o[i] = a[i];
         }
         return o;
+    }
+
+    var metaDoc = function (f, sig, str) {
+        var limit = 80
+        var words = str.replace(/\s+/g, " ").split(" ");
+        var docstring = [];
+        var tmpString = "  ";
+        for (var i = 0; i < words.length; i++) {
+            if (tmpString.length + words[i].length + 1 > limit) {
+                docstring.push(tmpString);
+                tmpString = "  ";
+            }
+            tmpString += words[i] + " ";
+        }
+        docstring.push(tmpString);
+        var signature = sig.replace(/\s+/g, " ")
+        f.__doc__ = signature + "\n\n  " + docstring.join("\n").trim();
     }
 
     var magnitude = function (a) {
@@ -61,6 +79,11 @@
     exports.now = function () {
         return new Date().getTime();
     }
+    metaDoc(
+        exports.now,
+        "GeoHack.now(): number",
+        "Return the current unix timestamp (milliseconds)."
+    );
 
     var rotateZ = function (theta, v) {
         return [
@@ -74,11 +97,26 @@
         var a = gmst(t);
         return rotateZ(-a, eci);
     }
+    metaDoc(
+        exports.eci2ecef,
+        "GeoHack.eci2ecef(t: number, eci: [number, number, number]):\
+         [number, number, number]",
+        "Convert ECI coordinates (kilometers) to ECEF coordinates (kilometers),\
+         at the given unix time (milliseconds)."
+    );
 
     exports.ecef2eci = function (t, ecef) {
         var a = gmst(t);
         return rotateZ(a, ecef);
     }
+    metaDoc(
+        exports.ecef2eci,
+        "GeoHack.ecef2eci(t: number, ecef: [number, number, number]):\
+         [number, number, number]",
+        "Convert ECEF coordinates (kilometers) to ECI coordinates (kilometers),\
+         at the given unix time (milliseconds)."
+    );
+
 
     exports.ecef2geodetic = function (ecef) {
         var x = ecef[0];
@@ -99,6 +137,13 @@
         var alt = (R / Math.cos(lat)) - (a * c);
         return [lat * RAD2DEG, lon * RAD2DEG, alt];
     }
+    metaDoc(
+        exports.ecef2geodetic,
+        "GeoHack.ecef2geodetic(ecef: [number, number, number]):\
+         [number, number, number]",
+        "Convert ECEF coordinates (kilometers) to geodetic latitude (degrees),\
+         longitude (degrees), and altitude (kilometers)."
+    );
 
     exports.geodetic2ecef = function (geodetic) {
         var lat = geodetic[0] * DEG2RAD;
@@ -114,6 +159,13 @@
         var z = ((n * (1 - e2)) + alt) * Math.sin(lat);
         return [x, y, z];
     }
+    metaDoc(
+        exports.geodetic2ecef,
+        "GeoHack.geodetic2ecef(geodetic: [number, number, number]):\
+         [number, number, number]",
+        "Convert geodetic latitude (degrees), longitude (degrees), and altitude\
+         (kilometers) to ECEF coordinates (kilometers)."
+    );
 
     exports.topocentric = function (geoOrigin, ecefTarget) {
         var lat = geoOrigin[0] * DEG2RAD;
