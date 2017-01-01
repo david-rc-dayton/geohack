@@ -158,6 +158,13 @@
     }
 
     exports.topocentric = function (geoOrigin, ecefTarget) {
+        /**
+         * ([number, number, number], [number, number, number]) -> [number, number, number]
+         * 
+         * Convert the geodetic latitude (degrees), longitude (degrees), and
+         * altitude (kilometers), and ECEF coordinates (kilometers), into
+         * topocentric coordinates (kilometers).
+         */
         var lat = geoOrigin[0] * DEG2RAD;
         var lon = geoOrigin[1] * DEG2RAD;
         var oECEF = exports.geodetic2ecef(geoOrigin);
@@ -180,6 +187,14 @@
     }
 
     exports.lookangle = function (geoOrigin, ecefTarget) {
+        /**
+         * ([number, number, number], [number, number, number]) -> [number, number, number]
+         * 
+         * Convert the geodetic latitude (degrees), longitude (degrees), and
+         * altitude (kilometers), and ECEF coordinates (kilometers), into
+         * a look angle azimuth (degrees), elevation (degrees), and slant range
+         * (kilometers).
+         */
         var sez = exports.topocentric(geoOrigin, ecefTarget);
         var s = sez[0];
         var e = sez[1];
