@@ -17,18 +17,6 @@
 
     var DEG2RAD = Math.PI / 180;
 
-    Object.defineProperty(Function.prototype, '__doc__', {
-        get: function () {
-            var comment = this.toString(),
-                __doc__ = '';
-            if (comment = comment.match(/\/\*[!*]([\s\S]*?)\*\//)) {
-                __doc__ = comment[1];
-                __doc__ = __doc__.replace(/\*/g, ' ').replace(/\ +/g, ' ');
-            }
-            return __doc__.trim();
-        }
-    });
-
     var copyArray = function (a) {
         var o = new Array(a.length);
         for (var i = 0; i < a.length; i++) {
@@ -72,11 +60,6 @@
     }
 
     exports.now = function () {
-        /**
-         * () -> number
-         * 
-         * Return the current unix timestamp (milliseconds).
-         */
         return new Date().getTime();
     }
 
@@ -89,34 +72,16 @@
     }
 
     exports.eci2ecef = function (t, eci) {
-        /**
-         * (number, [number, number, number]) -> [number, number, number]
-         * 
-         * Convert ECI coordinates (kilometers) to ECEF coordinates
-         * (kilometers), at the given unix time (milliseconds).
-         */
         var a = gmst(t);
         return rotateZ(-a, eci);
     }
 
     exports.ecef2eci = function (t, ecef) {
-        /**
-         * (number, [number, number, number]) -> [number, number, number]
-         * 
-         * Convert ECEF coordinates (kilometers) to ECI coordinates
-         * (kilometers), at the given unix time (milliseconds).
-         */
         var a = gmst(t);
         return rotateZ(a, ecef);
     }
 
     exports.ecef2geodetic = function (ecef) {
-        /**
-         * ([number, number, number]) -> [number, number, number]
-         * 
-         * Convert ECEF coordinates (kilometers) to geodetic latitude (degrees),
-         * longitude (degrees), and altitude (kilometers).
-         */
         var x = ecef[0];
         var y = ecef[1];
         var z = ecef[2];
@@ -137,12 +102,6 @@
     }
 
     exports.geodetic2ecef = function (geodetic) {
-        /**
-         * ([number, number, number]) -> [number, number, number]
-         * 
-         * Convert geodetic latitude (degrees), longitude (degrees), and
-         * altitude (kilometers) to ECEF coordinates (kilometers).
-         */
         var lat = geodetic[0] * DEG2RAD;
         var lon = geodetic[1] * DEG2RAD;
         var alt = geodetic[2];
@@ -158,13 +117,6 @@
     }
 
     exports.topocentric = function (geoOrigin, ecefTarget) {
-        /**
-         * ([number, number, number], [number, number, number]) -> [number, number, number]
-         * 
-         * Convert the geodetic latitude (degrees), longitude (degrees), and
-         * altitude (kilometers), and ECEF coordinates (kilometers), into
-         * topocentric coordinates (kilometers).
-         */
         var lat = geoOrigin[0] * DEG2RAD;
         var lon = geoOrigin[1] * DEG2RAD;
         var oECEF = exports.geodetic2ecef(geoOrigin);
@@ -187,14 +139,6 @@
     }
 
     exports.lookangle = function (geoOrigin, ecefTarget) {
-        /**
-         * ([number, number, number], [number, number, number]) -> [number, number, number]
-         * 
-         * Convert the geodetic latitude (degrees), longitude (degrees), and
-         * altitude (kilometers), and ECEF coordinates (kilometers), into
-         * a look angle azimuth (degrees), elevation (degrees), and slant range
-         * (kilometers).
-         */
         var sez = exports.topocentric(geoOrigin, ecefTarget);
         var s = sez[0];
         var e = sez[1];
