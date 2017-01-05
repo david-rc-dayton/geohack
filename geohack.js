@@ -125,16 +125,16 @@
         var rY = tECEF[1] - oECEF[1];
         var rZ = tECEF[2] - oECEF[2];
         var S = (
-            (Math.sin(lat) * Math.cos(lon) * rX) +
-            (Math.sin(lat) * Math.sin(lon) * rY) -
-            (Math.cos(lat) * rZ)
-        );
+                (Math.sin(lat) * Math.cos(lon) * rX) +
+                (Math.sin(lat) * Math.sin(lon) * rY) -
+                (Math.cos(lat) * rZ)
+                );
         var E = (-Math.sin(lon) * rX) + (Math.cos(lon) * rY);
         var Z = (
-            (Math.cos(lat) * Math.cos(lon) * rX) +
-            (Math.cos(lat) * Math.sin(lon) * rY) +
-            (Math.sin(lat) * rZ)
-        );
+                (Math.cos(lat) * Math.cos(lon) * rX) +
+                (Math.cos(lat) * Math.sin(lon) * rY) +
+                (Math.sin(lat) * rZ)
+                );
         return [S, E, Z];
     }
 
@@ -225,8 +225,8 @@
     }
 
     exports.testSatellite = new exports.Propagator(
-        exports.now(),
-        [42164.17207, 0, 0],
-        [0, 3.074660235, 0]
-    );
+            exports.now(),
+            [42164.17207, 0, 0],
+            [0, 3.074660235, 0]
+            );
 })(this.GeoHack = this.GeoHack || {});
