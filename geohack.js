@@ -45,12 +45,12 @@
         return scale(v, g);
     }
 
-    var julainDate = function (t) {
+    var julianDate = function (t) {
         return (t / (SECONDS_PER_DAY * 1000)) + 2440587.5;
     }
 
     var j2kDays = function (t) {
-        return julainDate(t) - 2451545;
+        return julianDate(t) - 2451545;
     }
 
     var gmst = function (t) {
