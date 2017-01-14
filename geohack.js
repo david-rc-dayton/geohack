@@ -80,10 +80,32 @@ var GeoHack = {};
         return [fx, fy, fz];
     }
 
+    var j3Effect = function (position) {
+        var x = position[0];
+        var y = position[1];
+        var z = position[2];
+        var r = magnitude(position);
+        var fxPre = J3 * ((x * z) / Math.pow(r, 9));
+        var fxPost = (10 * z * z) - ((15 / 2) * ((x * x) + (y * y)));
+        var fx = fxPre * fxPost;
+        var fyPre = J3 * ((y * z) / Math.pow(r, 9));
+        var fyPost = (10 * z * z) - ((15 / 2) * ((x * x) + (y * y)));
+        var fy = fyPre * fyPost;
+        var fzPre = J3 * (1 / Math.pow(r, 9));
+        var fzPost = (
+            (4 * z * z) *
+            ((z * z) - (3 * ((x * x) + (y * y)))) +
+            ((3 / 2) * ((x * x) + (y * y)) * ((x * x) + (y * y)))
+        );
+        var fz = fzPre * fzPost;
+        return [fx, fy, fz];
+    }
+
     var forces = function (position) {
         var g = gravity(position);
         var j2 = j2Effect(position);
-        return add(g, j2);
+        var j3 = j3Effect(position);
+        return add(g, j2, j3);
     }
 
     var julianDate = function (t) {
@@ -280,3 +302,7 @@ var issNextPosition = [945.92445, -6089.61961, -2849.12060];
 var issTestPosition = issPropagator.propagate(issNextEpoch).position;
 console.log(issNextPosition);
 console.log(issTestPosition);
+setInterval(function () {
+    issPropagator.propagate(new Date().getTime());
+    console.log(issPropagator.getGeodetic());
+}, 2000)
