@@ -216,7 +216,7 @@ var GeoHack = {};
         this.initEpoch = epoch;
         this.initPosition = position;
         this.initVelocity = velocity;
-        this.step = step || 10;
+        this.step = step || 60;
         this.reset();
     }
 
@@ -303,6 +303,6 @@ var issTestPosition = issPropagator.propagate(issNextEpoch).position;
 console.log(issNextPosition);
 console.log(issTestPosition);
 setInterval(function () {
-    issPropagator.propagate(new Date().getTime());
-    console.log(issPropagator.getGeodetic());
+    var p = issPropagator.propagate(new Date().getTime()).getGeodetic();
+    console.log(p[0].toFixed(3), p[1].toFixed(3), p[2].toFixed(2));
 }, 2000)
