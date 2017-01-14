@@ -5,7 +5,11 @@ var GeoHack = {};
 
     exports.VERSION = "1.0.0";
 
-    var MU = 398600.5;
+    var MU = 398600.440;
+
+    var J2 = 1.7555e10;
+
+    var J3 = -2.619e11;
 
     var SECONDS_PER_DAY = 86400;
 
@@ -57,6 +61,29 @@ var GeoHack = {};
         var r = magnitude(a);
         var g = -(MU / (r * r));
         return scale(g, n);
+    }
+
+    var j2Effect = function (position) {
+        var x = position[0];
+        var y = position[1];
+        var z = position[2];
+        var r = magnitude(position);
+        var fxPre = J2 * (x / Math.pow(r, 7));
+        var fxPost = (6 * z * z) - ((3 / 2) * ((x * x) + (y * y)));
+        var fx = fxPre * fxPost;
+        var fyPre = J2 * (y / Math.pow(r, 7));
+        var fyPost = (6 * z * z) - ((3 / 2) * ((x * x) + (y * y)));
+        var fy = fyPre * fyPost;
+        var fzPre = J2 * (z / Math.pow(r, 7));
+        var fzPost = (3 * z * z) - ((9 / 2) * ((x * x) + (y * y)));
+        var fz = fzPre * fzPost;
+        return [fx, fy, fz];
+    }
+
+    var forces = function (position) {
+        var g = gravity(position);
+        var j2 = j2Effect(position);
+        return add(g, j2);
     }
 
     var julianDate = function (t) {
@@ -194,13 +221,13 @@ var GeoHack = {};
             var r = this.position;
             var v = this.velocity;
             var h = Math.min(this.step, delta) * direction;
-            var kv1 = gravity(r);
+            var kv1 = forces(r);
             var kr1 = v;
-            var kv2 = gravity(add(r, scale(h / 2, kr1)));
+            var kv2 = forces(add(r, scale(h / 2, kr1)));
             var kr2 = add(v, scale(h / 2, kv1));
-            var kv3 = gravity(add(r, scale(h / 2, kr2)));
+            var kv3 = forces(add(r, scale(h / 2, kr2)));
             var kr3 = add(v, scale(h / 2, kv2));
-            var kv4 = gravity(add(r, scale(h, kr3)));
+            var kv4 = forces(add(r, scale(h, kr3)));
             var kr4 = add(v, scale(h, kv3));
             var vpost = add(kv1, scale(2, kv2), scale(2, kv3), kv4);
             var rpost = add(kr1, scale(2, kr2), scale(2, kr3), kr4);
