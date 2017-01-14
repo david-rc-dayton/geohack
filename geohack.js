@@ -1,7 +1,9 @@
+var GeoHack = {};
+
 (function (exports) {
     'use strict';
 
-    exports.VERSION = "1.0.0-SNAPSHOT";
+    exports.VERSION = "1.0.0";
 
     var MU = 398600.5;
 
@@ -11,18 +13,20 @@
 
     var EQUATORIAL_RADIUS = 6378.137;
 
-    var POLAR_RADIUS = 6356.7523142;
+    var FLATTENING = 1 / 298.257223563;
+
+    var POLAR_RADIUS = EQUATORIAL_RADIUS * (1 - FLATTENING);
+
+    var SOLAR_DAY = 86400
+
+    var SIDEREAL_DAY = 0.99726958 * SOLAR_DAY
 
     var RAD2DEG = 180 / Math.PI;
 
     var DEG2RAD = Math.PI / 180;
 
-    var copyArray = function (a) {
-        var o = new Array(a.length);
-        for (var i = 0; i < a.length; i++) {
-            o[i] = a[i];
-        }
-        return o;
+    var clone = function (a) {
+        return a.slice(0);
     }
 
     var magnitude = function (a) {
@@ -34,15 +38,25 @@
         return [a[0] / m, a[1] / m, a[2] / m];
     }
 
-    var scale = function (a, s) {
+    var scale = function (s, a) {
         return [a[0] * s, a[1] * s, a[2] * s];
     }
 
+    var add = function () {
+        var state = clone(arguments[0]);
+        for (var i = 1; i < arguments.length; i++) {
+            for (var j = 0; j < state.length; j++) {
+                state[j] += arguments[i][j];
+            }
+        }
+        return state;
+    }
+
     var gravity = function (a) {
-        var v = normalize(a);
-        var m = magnitude(a);
-        var g = -(MU / (m * m));
-        return scale(v, g);
+        var n = normalize(a);
+        var r = magnitude(a);
+        var g = -(MU / (r * r));
+        return scale(g, n);
     }
 
     var julianDate = function (t) {
@@ -125,16 +139,16 @@
         var rY = tECEF[1] - oECEF[1];
         var rZ = tECEF[2] - oECEF[2];
         var S = (
-                (Math.sin(lat) * Math.cos(lon) * rX) +
-                (Math.sin(lat) * Math.sin(lon) * rY) -
-                (Math.cos(lat) * rZ)
-                );
+            (Math.sin(lat) * Math.cos(lon) * rX) +
+            (Math.sin(lat) * Math.sin(lon) * rY) -
+            (Math.cos(lat) * rZ)
+        );
         var E = (-Math.sin(lon) * rX) + (Math.cos(lon) * rY);
         var Z = (
-                (Math.cos(lat) * Math.cos(lon) * rX) +
-                (Math.cos(lat) * Math.sin(lon) * rY) +
-                (Math.sin(lat) * rZ)
-                );
+            (Math.cos(lat) * Math.cos(lon) * rX) +
+            (Math.cos(lat) * Math.sin(lon) * rY) +
+            (Math.sin(lat) * rZ)
+        );
         return [S, E, Z];
     }
 
@@ -150,60 +164,59 @@
     }
 
     exports.Propagator = function (epoch, position, velocity, step) {
-        this._initEpoch = epoch;
-        this._initPosition = position;
-        this._initVelocity = velocity;
-        this._step = step || 1;
+        this.initEpoch = epoch;
+        this.initPosition = position;
+        this.initVelocity = velocity;
+        this.step = step || 10;
         this.reset();
     }
 
     exports.Propagator.prototype.reset = function () {
-        this._epoch = this._initEpoch;
-        this._position = copyArray(this._initPosition);
-        this._velocity = copyArray(this._initVelocity);
+        this.epoch = this.initEpoch;
+        this.position = clone(this.initPosition);
+        this.velocity = clone(this.initVelocity);
         return this;
     }
 
     exports.Propagator.prototype.setStep = function (seconds) {
         if (seconds > 0) {
-            this._step = seconds;
+            this.step = seconds;
         } else {
             throw new Error("Step size must be a positive number.");
         }
         return this;
     }
 
-    exports.Propagator.prototype.propagate = function (epoch) {
-        var dir = (epoch < this._epoch) ? -1 : 1;
-        while (epoch !== this._epoch) {
-            var s = this._position;
-            var v = this._velocity;
-            var a = gravity(s);
-            var dist = Math.abs(epoch - this._epoch) / 1000;
-            var t = Math.min(this._step, dist) * dir;
-            this._epoch += t * 1000;
-            var sNext = [
-                s[0] + (v[0] * t) + (0.5 * a[0] * t * t),
-                s[1] + (v[1] * t) + (0.5 * a[1] * t * t),
-                s[2] + (v[2] * t) + (0.5 * a[2] * t * t)
-            ];
-            var vNext = [
-                v[0] + (a[0] * t),
-                v[1] + (a[1] * t),
-                v[2] + (a[2] * t)
-            ];
-            this._position = sNext;
-            this._velocity = vNext;
+    exports.Propagator.prototype.propagate = function (newEpoch) {
+        while (this.epoch !== newEpoch) {
+            var direction = (newEpoch > this.epoch) ? 1 : -1;
+            var delta = Math.abs(newEpoch - this.epoch) / 1000;
+            var r = this.position;
+            var v = this.velocity;
+            var h = Math.min(this.step, delta) * direction;
+            var kv1 = gravity(r);
+            var kr1 = v;
+            var kv2 = gravity(add(r, scale(h / 2, kr1)));
+            var kr2 = add(v, scale(h / 2, kv1));
+            var kv3 = gravity(add(r, scale(h / 2, kr2)));
+            var kr3 = add(v, scale(h / 2, kv2));
+            var kv4 = gravity(add(r, scale(h, kr3)));
+            var kr4 = add(v, scale(h, kv3));
+            var vpost = add(kv1, scale(2, kv2), scale(2, kv3), kv4);
+            var rpost = add(kr1, scale(2, kr2), scale(2, kr3), kr4);
+            this.velocity = add(v, scale(h / 6, vpost));
+            this.position = add(r, scale(h / 6, rpost));
+            this.epoch += h * 1000;
         }
         return this;
     }
 
     exports.Propagator.prototype.getEpoch = function () {
-        return this._epoch;
+        return this.epoch;
     }
 
     exports.Propagator.prototype.getECI = function () {
-        return this._position;
+        return this.position;
     }
 
     exports.Propagator.prototype.getECEF = function () {
@@ -225,8 +238,18 @@
     }
 
     exports.testSatellite = new exports.Propagator(
-            exports.now(),
-            [42164.17207, 0, 0],
-            [0, 3.074660235, 0]
-            );
-})(this.GeoHack = this.GeoHack || {});
+        exports.now(),
+        [42164.17207, 0, 0],
+        [0, 3.074660235, 0]
+    );
+})(GeoHack);
+
+var issEpoch = Date.UTC(2017, 0, 14, 20, 55);
+var issPosition = [-111.31690, 6662.17019, 1255.34162];
+var issVelocity = [-4.813744845, -1.196254215, 5.853086769];
+var issPropagator = new GeoHack.Propagator(issEpoch, issPosition, issVelocity);
+var issNextEpoch = Date.UTC(2017, 0, 15, 20, 55);
+var issNextPosition = [945.92445, -6089.61961, -2849.12060];
+var issTestPosition = issPropagator.propagate(issNextEpoch).position;
+console.log(issNextPosition);
+console.log(issTestPosition);
