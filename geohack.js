@@ -1,5 +1,3 @@
-var GeoHack = {};
-
 (function (exports) {
     'use strict';
 
@@ -285,24 +283,4 @@ var GeoHack = {};
         var ecef = this.getECEF();
         return exports.lookangle(geoOriginDeg, ecef);
     }
-
-    exports.testSatellite = new exports.Propagator(
-        exports.now(),
-        [42164.17207, 0, 0],
-        [0, 3.074660235, 0]
-    );
-})(GeoHack);
-
-var issEpoch = Date.UTC(2017, 0, 14, 20, 55);
-var issPosition = [-111.31690, 6662.17019, 1255.34162];
-var issVelocity = [-4.813744845, -1.196254215, 5.853086769];
-var issPropagator = new GeoHack.Propagator(issEpoch, issPosition, issVelocity);
-var issNextEpoch = Date.UTC(2017, 0, 15, 20, 55);
-var issNextPosition = [945.92445, -6089.61961, -2849.12060];
-var issTestPosition = issPropagator.propagate(issNextEpoch).position;
-console.log(issNextPosition);
-console.log(issTestPosition);
-setInterval(function () {
-    var p = issPropagator.propagate(new Date().getTime()).getGeodetic();
-    console.log(p[0].toFixed(3), p[1].toFixed(3), p[2].toFixed(2));
-}, 2000)
+})(typeof exports === 'undefined' ? this['GeoHack'] = {} : exports);
