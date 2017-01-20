@@ -274,11 +274,6 @@
         return exports.ecef2geodetic(this.getECEF());
     }
 
-    exports.Propagator.prototype.getGeodeticDegrees = function () {
-        var c = this.getGeodetic();
-        return [c[0] * RAD2DEG, c[1] * RAD2DEG, c[2]];
-    }
-
     exports.Propagator.prototype.getLookAngle = function (geoOriginDeg) {
         var ecef = this.getECEF();
         return exports.lookangle(geoOriginDeg, ecef);
