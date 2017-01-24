@@ -1,7 +1,7 @@
 (function (exports) {
     'use strict';
 
-    exports.VERSION = "1.0.0";
+    exports.VERSION = "1.1.0";
 
     var MU = 398600.440;
 
