@@ -9,8 +9,6 @@
 
     var J3 = -2.619e11;
 
-    var SECONDS_PER_DAY = 86400;
-
     var TWO_PI = 2 * Math.PI;
 
     var EQUATORIAL_RADIUS = 6378.137;
@@ -107,7 +105,7 @@
     }
 
     var julianDate = function (t) {
-        return (t / (SECONDS_PER_DAY * 1000)) + 2440587.5;
+        return (t / (SOLAR_DAY * 1000)) + 2440587.5;
     }
 
     var j2kDays = function (t) {
@@ -210,6 +208,12 @@
         return [az * RAD2DEG, el * RAD2DEG, dist];
     }
 
+    exports.driftRate = function (position) {
+        var r = magnitude(position);
+        var t = 2 * Math.PI * Math.sqrt(Math.pow(r, 3) / MU);
+        return 360 - (360 * (t / SIDEREAL_DAY))
+    }
+
     exports.Propagator = function (epoch, position, velocity, step) {
         this.initEpoch = epoch;
         this.initPosition = position;
@@ -277,5 +281,10 @@
     exports.Propagator.prototype.getLookAngle = function (geoOriginDeg) {
         var ecef = this.getECEF();
         return exports.lookangle(geoOriginDeg, ecef);
+    }
+
+    exports.Propagator.prototype.getDriftRate = function () {
+        var eci = this.getECI();
+        return exports.driftRate(eci);
     }
 })(typeof exports === 'undefined' ? this['GeoHack'] = {} : exports);
